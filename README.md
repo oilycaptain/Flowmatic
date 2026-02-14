@@ -30,6 +30,11 @@ FlowMatic is a **secure IoT-based smart irrigation** monitoring app.
   - `createdAt` (timestamp)
   - `createdBy` (uid)
 
+## Security + Reliability Notes
+- **Encrypted data transmission:** Firebase Auth + Firestore SDK traffic is sent over TLS, and the app now explicitly enables Firestore `sslEnabled: true`.
+- **Stable cloud storage:** Firestore is used as the primary cloud database and the app now explicitly enables offline persistence plus unlimited local cache for better sync resilience.
+- **Transient-failure handling:** write operations (pump/mode/threshold/seed data) now retry automatically on temporary Firestore errors.
+
 ## Run
 1. `flutter pub get`
 2. `flutter run`
