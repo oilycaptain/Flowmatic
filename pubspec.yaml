@@ -18,8 +18,9 @@ dependencies:
   cloud_firestore: ^5.4.4
 
   google_sign_in: ^6.2.1
+  cryptography: ^2.7.0
 
-    # UI
+  # UI
   google_fonts: ^6.2.1
 
 dev_dependencies:

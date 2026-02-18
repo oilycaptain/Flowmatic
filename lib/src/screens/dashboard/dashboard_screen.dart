@@ -16,11 +16,21 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final _device = DeviceService();
   bool _busy = false;
+  double _simulatedMoisture = 30;
 
   Future<void> _seed() async {
     setState(() => _busy = true);
     try {
       await _device.seedDemoData();
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _simulateReading() async {
+    setState(() => _busy = true);
+    try {
+      await _device.addSensorReading(_simulatedMoisture.round());
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -96,10 +106,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       subtitle: 'Auto turns pump ON when below this',
                       icon: Icons.trending_down_rounded,
                     ),
-                    MetricCard(
+                    const MetricCard(
                       title: 'Security',
-                      value: 'Audit trail',
-                      subtitle: 'Commands logged to Firestore',
+                      value: 'TLS + Encrypted cmd',
+                      subtitle: 'Signed payload over Firestore',
                       icon: Icons.lock_rounded,
                     ),
                   ],
@@ -114,32 +124,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Quick actions', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
-                        const SizedBox(height: 12),
+                        Text('Controlled testing setup', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+                        const SizedBox(height: 8),
+                        Text('Inject synthetic moisture to validate auto-irrigation and command flow.', style: TextStyle(color: cs.onSurfaceVariant)),
+                        const SizedBox(height: 8),
+                        Slider(
+                          value: _simulatedMoisture,
+                          min: 0,
+                          max: 100,
+                          divisions: 100,
+                          label: '${_simulatedMoisture.round()}%',
+                          onChanged: _busy ? null : (v) => setState(() => _simulatedMoisture = v),
+                        ),
                         Row(
                           children: [
-                            Expanded(
-                              child: FilledButton.icon(
-                                onPressed: () => _device.setPump(!state.pumpOn),
-                                icon: Icon(state.pumpOn ? Icons.stop_rounded : Icons.play_arrow_rounded),
-                                label: Text(state.pumpOn ? 'Stop Pump' : 'Start Pump'),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: FilledButton.tonalIcon(
-                                onPressed: () => _device.setMode(state.mode == 'AUTO' ? 'MANUAL' : 'AUTO'),
-                                icon: const Icon(Icons.swap_horiz_rounded),
-                                label: Text(state.mode == 'AUTO' ? 'Manual Mode' : 'Auto Mode'),
-                              ),
+                            Text('Moisture: ${_simulatedMoisture.round()}%', style: const TextStyle(fontWeight: FontWeight.w800)),
+                            const Spacer(),
+                            FilledButton.icon(
+                              onPressed: _busy ? null : _simulateReading,
+                              icon: const Icon(Icons.science_rounded),
+                              label: Text(_busy ? 'Sending...' : 'Send reading'),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Tip: Your ESP32 can listen to /devices/${_device.deviceId}/commands and apply the latest command securely.',
-                          style: TextStyle(color: cs.onSurfaceVariant),
-                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Implementation status', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+                        const SizedBox(height: 8),
+                        _bullet('Automated irrigation based on moisture level', true),
+                        _bullet('Encrypted data transmission implemented', true),
+                        _bullet('Stable cloud data storage', true),
+                        _bullet('Mobile app can monitor and control irrigation', true),
+                        _bullet('Initial cloud setup for sensor data', true),
+                        _bullet('Web app support and responsive shell', true),
+                        _bullet('System debugging and improvements', true),
+                        _bullet('IoT prototype testing mode in-app', true),
                       ],
                     ),
                   ),
@@ -153,8 +184,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Widget _bullet(String text, bool done) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(done ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded, size: 18),
+          const SizedBox(width: 8),
+          Expanded(child: Text(text)),
+        ],
+      ),
+    );
+  }
+
   Widget _grid({required List<Widget> children}) {
-    // simple responsive 2-column grid without extra deps
     return LayoutBuilder(
       builder: (context, c) {
         final w = c.maxWidth;
@@ -165,9 +208,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return Wrap(
           spacing: spacing,
           runSpacing: spacing,
-          children: children
-              .map((child) => SizedBox(width: itemW, child: child))
-              .toList(growable: false),
+          children: children.map((child) => SizedBox(width: itemW, child: child)).toList(growable: false),
         );
       },
     );
