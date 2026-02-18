@@ -71,6 +71,7 @@ class DeviceService {
       'payload': payload,
       'createdAt': FieldValue.serverTimestamp(),
       'createdBy': uid,
+      'status': 'PENDING',
     });
   }
 }
